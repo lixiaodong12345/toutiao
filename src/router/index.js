@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import login from '@/views/login/login.vue'
 import home from '@/views/home/home.vue'
 import '@/assets/css/global.css'
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -25,6 +26,13 @@ const routes = [
 
 const router = new VueRouter({
   routes
+})
+router.beforeEach((to, from, next) => {
+  let token = window.localStorage.getItem('token')
+  if (!token && to.path != '/login') {
+    return next('/login')
+  }
+  next()
 })
 
 export default router

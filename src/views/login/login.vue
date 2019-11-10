@@ -2,6 +2,7 @@
   <div id="login-container">
     <!-- 设置样式 -->
     <div id="login-box">
+      <!-- ref form表单验证的DOM元素 -->
       <el-form ref="loginFo"
                :model="loginForm"
                :rules="rules">
@@ -9,11 +10,14 @@
              alt="">
         <el-form-item prop="mobile">
           <el-input v-model="loginForm.mobile"
-                    placeholder="请输入手机号码"></el-input>
+                    placeholder="请输入手机号码">
+                    <i slot="prefix" class="iconfont icon-iconsheji-">
+                      </i></el-input>
         </el-form-item>
         <el-form-item prop="code">
           <el-input v-model="loginForm.code"
-                    placeholder="请输入校验码"></el-input>
+                    placeholder="请输入校验码">
+                    <i slot="prefix" class="iconfont icon-yanzhengma1"></i></el-input>
         </el-form-item>
         <el-form-item style="text-align:left;"
                       prop="xieyi">
@@ -24,7 +28,7 @@
         <el-form-item>
           <el-button style="width:100%;"
                      type="primary"
-                     @click="login">登录</el-button>
+                     @click="login" v-loading="loading" :disabled="loading">登录</el-button>
         </el-form-item>
       </el-form>
 
@@ -33,12 +37,16 @@
 </template>
 
 <script>
+import '@/assets/js/gt.js'
+import '@/assets/icon/iconfont.css'
 export default {
   data () {
     var checkAge = (rule, value, callback) => {
       value ? callback() : callback('无条件')
     }
     return {
+      loading: false,
+      createObj: null,
       loginForm: {
         mobile: '13555555555',
         code: '246810',
@@ -66,21 +74,60 @@ export default {
 
       this.$refs.loginFo.validate(valid => {
         if (valid) {
-          var pro = this.$http.post('/authorizations', this.loginForm)
+          if (this.createObj !== null) {
+            return this.createObj.verify()
+          }
+          this.loading = true
+          let pro = this.$http.get(`/captchas/${this.loginForm.mobile}`)
           pro
             .then(result => {
-              if (result.data.message === 'OK') {
-                console.log(result)
+              let { data } = result.data
+              console.log(data)
 
-                window.localStorage.setItem('user', JSON.stringify(result.data.data))
-                this.$router.push('/home')
-              }
+              window.initGeetest({
+                // 以下配置参数来自服务端 SDK
+                gt: data.gt,
+                challenge: data.challenge,
+                offline: !data.success,
+                new_captcha: true,
+                product: 'bind' // 没有按钮，通过登录按钮激活验证
+              }, captchaObj => {
+                // 这里可以调用验证实例 captchaObj 的实例方法
+                captchaObj.onReady(() => {
+                  // 验证码ready之后才能调用verify方法显示验证码
+                  this.createObj = captchaObj
+                  captchaObj.verify() // 显示验证码窗口
+                  // 交互窗口完毕后 激活样式
+                  this.loading = false
+                }).onSuccess(() => {
+                  // your code
+                  // B. 校验账号真实性，登录
+                  this.loginAt()
+                }).onError(() => {
+                  // your code
+                })
+              })
             })
-            // .catch(err => {
-            //   this.$message.error('用户名错误')
-            // })
+            .catch(err => {
+              return this.$message.error('货的极验初始校验错误' + err)
+            })
         }
       })
+    },
+    loginAt () {
+      var pro = this.$http.post('/authorizations', this.loginForm)
+      pro
+        .then(result => {
+          if (result.data.message === 'OK') {
+            console.log(result)
+
+            window.localStorage.setItem('token', JSON.stringify(result.data.data))
+            this.$router.push('/home')
+          }
+        })
+      // .catch(err => {
+      //   this.$message.error('用户名错误')
+      // })
     }
 
   }

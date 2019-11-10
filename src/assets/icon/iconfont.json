@@ -1,0 +1,23 @@
+{
+  "id": "1502171",
+  "name": "top86.icon",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "3816825",
+      "name": "手机",
+      "font_class": "iconsheji-",
+      "unicode": "e635",
+      "unicode_decimal": 58933
+    },
+    {
+      "icon_id": "9974452",
+      "name": "验证码",
+      "font_class": "yanzhengma1",
+      "unicode": "e70b",
+      "unicode_decimal": 59147
+    }
+  ]
+}
