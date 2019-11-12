@@ -1,6 +1,7 @@
 <template>
   <div>
-      welcome
+
+      欢迎来到内容区
   </div>
 </template>
 

@@ -48,7 +48,7 @@ export default {
       loading: false,
       createObj: null,
       loginForm: {
-        mobile: '13555555555',
+        mobile: '13911111111',
         code: '246810',
         xieyi: false
       },
@@ -71,7 +71,6 @@ export default {
   methods: {
     login () {
       //   编程跳转
-
       this.$refs.loginFo.validate(valid => {
         if (valid) {
           if (this.createObj !== null) {
@@ -83,7 +82,6 @@ export default {
             .then(result => {
               let { data } = result.data
               console.log(data)
-
               window.initGeetest({
                 // 以下配置参数来自服务端 SDK
                 gt: data.gt,
