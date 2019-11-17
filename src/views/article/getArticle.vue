@@ -9,30 +9,28 @@
         <el-form ref="searchFormRef"
                  :model="searchForm">
           <el-form-item label="文章状态：">
-            <el-radio v-model="searchForm.status"
-                      label="">全部</el-radio>
-            <el-radio v-model="searchForm.status"
-                      label="0">草稿</el-radio>
-            <el-radio v-model="searchForm.status"
-                      label="1">待审核</el-radio>
-            <el-radio v-model="searchForm.status"
-                      label="2">审核通过</el-radio>
-            
-            <el-radio v-model="searchForm.status"
-                      label="3">已删除</el-radio>
+            <el-radio-group v-model="searchForm.status"
+                            @change="getArticleList()">
+              <el-radio v-model="searchForm.status"
+                        label="">全部</el-radio>
+              <el-radio v-model="searchForm.status"
+                        label="0">草稿</el-radio>
+              <el-radio v-model="searchForm.status"
+                        label="1">待审核</el-radio>
+              <el-radio v-model="searchForm.status"
+                        label="2">审核通过</el-radio>
+
+              <el-radio v-model="searchForm.status"
+                        label="3">已删除</el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item label="频道列表：">
-            <el-select v-model="searchForm.channel_id"
-                       placeholder="请选择"
-                       clearable>
-              <el-option v-for="item in channelList"
-                         :key="item.id"
-                         :label="item.name"
-                         :value="item.id"></el-option>
-            </el-select>
+            <channel-com @select="sele"></channel-com>
+            
           </el-form-item>
           <el-form-item label="时间选择：">
             <el-date-picker v-model="timetotime"
+                            value-format="yyyy-MM-dd"
                             type="datetimerange"
                             range-separator="至"
                             start-placeholder="开始日期"
@@ -41,6 +39,7 @@
           </el-form-item>
         </el-form>
       </div>
+
     </el-card>
     <el-card class="box-card">
       <div slot="header"
@@ -61,8 +60,6 @@
                            prop="title"
                            width="300"></el-table-column>
           <el-table-column label="状态">
-            <!--如果当前内容区域中多个标签都使用了 作用域插槽，
-			可以优化为：提供一个父级的template标签统一使用作用域插槽-->
             <template slot-scope="stData">
               <el-tag v-if="stData.row.status===0">草稿</el-tag>
               <el-tag v-else-if="stData.row.status===1"
@@ -76,53 +73,79 @@
             </template>
           </el-table-column>
           <el-table-column label="操作">
-            <el-button type="primary"
-                       size="mini">修改</el-button>
-            <el-button type="danger"
-                       size="mini">删除</el-button>
+            <template slot-scope="stData">
+              <el-button type="primary"
+                         size="mini"
+                         @click="$router.push(`/articleEdit/${stData.row.id}`)">修改</el-button>
+              <el-button type="danger"
+                         size="mini"
+                         @click="del(stData.row.id)">删除</el-button>
+            </template>
           </el-table-column>
         </el-table>
       </div>
     </el-card>
+    <el-pagination @size-change="handleSizeChange"
+                   @current-change="handleCurrentChange"
+                   :current-page="searchForm.page"
+                   :page-sizes="[10, 20, 30]"
+                   :page-size="searchForm.per_page"
+                   layout="total, sizes, prev, pager, next, jumper"
+                   :total="tot">
+    </el-pagination>
   </div>
 </template>
 
 <script>
+import ChannelCom from '@/components/channel.vue'
+
 export default {
   // 导出name名 方便代码调试
   name: 'getArticle',
+  components: {
+    ChannelCom
+  },
   data () {
     return {
       tot: 0,
       searchForm: {
         status: '',
         channel_id: '',
-        begin_time: '',
-        end_time: '',
+        begin_pubdate: '',
+        end_pubdate: '',
         page: 1,
         per_page: 10
       },
-      channelList: [
-
-      ],
       articleList: [],
       timetotime: []
     }
   },
+
   created () {
-    this.getChannelList()
     this.getArticleList()
   },
   methods: {
+    handleSizeChange (val) {
+      this.searchForm.per_page = val
+      this.getArticleList()
+    },
+    sele (val) {
+      this.searchForm.channel_id = val
+    },
+    handleCurrentChange (val) {
+      this.searchForm.page = val
+      this.getArticleList()
+    },
     //   发送axios请求获得数据
-    getChannelList () {
-      let pro = this.$http.get('/channels')
-      pro
-        .then(result => {
-          if (result.data.message === 'OK') {
-            this.channelList = result.data.data.channels
-          }
-        })
+    del (id) {
+      if (confirm('确定要删除?')) {
+        let pro = this.$http.delete(`/articles/${id}`)
+        pro
+          .then(result => {
+            alert('删除成功')
+            this.getArticleList()
+          })
+      }
     },
     getArticleList () {
       let searData = {}
@@ -131,8 +154,7 @@ export default {
           searData[i] = this.searchForm[i]
         }
       }
-      console.log(searData)
-
+      console.dir(searData)
       let pro = this.$http.get('/articles', { params: searData })
       pro
         .then(result => {
@@ -150,12 +172,14 @@ export default {
     timetotime (newTime) {
       //   console.log(newTime)
       if (newTime) {
-        this.searchForm.begin_time = newTime[0]
-        this.searchForm.end_time = newTime[1]
+        this.searchForm.begin_pubdate = newTime[0]
+        this.searchForm.end_pubdate = newTime[1]
       } else {
         this.searchForm.begin_pubdate = ''
         this.searchForm.end_pubdate = ''
       }
+
+      this.getArticleList()
     },
     searchForm: {
       handler: function (news) {
@@ -169,8 +193,11 @@ export default {
 }
 </script>
 
-<style>
+<style lang="less" scoped>
 .box-card {
   margin-bottom: 15px;
+}
+.el-pagination {
+  margin-top: 15px;
 }
 </style>

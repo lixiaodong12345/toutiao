@@ -2,11 +2,13 @@
   <el-container>
     <el-aside :width="isCollapse?'65px':'200px'">
 
-      <el-menu background-color="#333744" :style="{width:isCollapse?'65px':'200px'}"
+      <el-menu background-color="#333744"
+               :style="{width:isCollapse?'65px':'200px'}"
                text-color="#fff"
                :collapse="isCollapse"
                :collapse-transition="false"
-               active-text-color="#ffd04b" :router="true">
+               active-text-color="#ffd04b"
+               :router="true">
         <el-menu-item index="/welcome"
                       :style="{width:isCollapse?'65px':'200px'}">
           <i class="el-icon-location"></i>
@@ -18,17 +20,17 @@
             <i class="el-icon-menu"></i>
             <span>内容管理</span>
           </template>
-          <el-menu-item index="2-1">发布文章</el-menu-item>
+          <el-menu-item index="/articleadd">发布文章</el-menu-item>
           <el-menu-item index="/getArticle">文章列表</el-menu-item>
           <el-menu-item index="2-3">评论列表</el-menu-item>
-          <el-menu-item index="2-4">素材管理</el-menu-item>
+          <el-menu-item index="/material">素材管理</el-menu-item>
         </el-submenu>
         <el-menu-item index="3"
                       :style="{width:isCollapse?'65px':'200px'}">
           <i class="el-icon-location"></i>
           <span slot="title">粉丝管理</span>
         </el-menu-item>
-        <el-menu-item index="4"
+        <el-menu-item index="/account"
                       :style="{width:isCollapse?'65px':'200px'}">
           <i class="el-icon-location"></i>
           <span slot="title">账户管理</span>
@@ -40,9 +42,9 @@
       <el-header>
         <div id="lt">
           <i slot="prefix"
-  :class="isCollapse?'el-icon-s-unfold':'el-icon-s-fold'"
-  style="cursor:pointer;"
-  @click="isCollapse=!isCollapse"></i>
+             :class="isCollapse?'el-icon-s-unfold':'el-icon-s-fold'"
+             style="cursor:pointer;"
+             @click="isCollapse=!isCollapse"></i>
           <span>江苏传智播客教育科技股份有限公司</span>
         </div>
         <div id="rt">
@@ -78,18 +80,23 @@
 </template>
 
 <script>
+import bus from '@/utils/bus.js'
 export default {
-  computed: {
-    name () {
-      return JSON.parse(window.localStorage.getItem('token')).name
-    },
-    photo () {
-      return JSON.parse(window.localStorage.getItem('token')).photo
-    }
-  },
+
   data () {
     return {
+      tmpName: '', // 声明一个临时账户名称
+      tmpPhoto: '', // 声明一个临时图片名称
       isCollapse: false
+    }
+  },
+
+  computed: {
+    name () {
+      return this.tmpName || JSON.parse(window.localStorage.getItem('token')).name
+    },
+    photo () {
+      return this.tmpPhoto || JSON.parse(window.localStorage.getItem('token')).photo
     }
   },
   methods: {
@@ -99,8 +106,23 @@ export default {
         this.$router.push('/login')
       }
     }
+  },
+  created () {
+    bus.$on('getName', nm => {
+      let getToken = JSON.parse(window.localStorage.getItem('token'))
+      getToken.name = nm
+      window.localStorage.setItem('token', JSON.stringify(getToken))
+      this.tmpName = nm
+    })
+    bus.$on('getPhoto', ph => {
+      let getToken = JSON.parse(window.localStorage.getItem('token'))
+      getToken.photo = ph
+      window.localStorage.setItem('token', JSON.stringify(getToken))
+      this.tmpPhoto = ph
+    })
   }
 }
+
 </script>
 
 <style lang="less" scoped>
